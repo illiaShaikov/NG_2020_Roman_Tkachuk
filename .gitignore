@@ -3,3 +3,6 @@ bin/
 obj/
 *.cbp
 *.depend
+build*/
+.gitignore
+*.pro
