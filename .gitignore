@@ -6,3 +6,4 @@ obj/
 build*/
 .gitignore
 *.pro
+*.pro.user

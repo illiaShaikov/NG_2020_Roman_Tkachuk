@@ -33,6 +33,11 @@ void generateLevel(int levelSize, int type) {
         }
     }
 
+    // Let's place our enemy
+
+    generatedLevel[rand()%levelSize][rand()%levelSize] = 'e';
+
+
 }
 
 void showLevel(int levelSize, int type) {
@@ -135,8 +140,83 @@ bool processPlayerMove(int pPosX, int pPosY, int levelSize) {
     }
 }
 
+void updateGeneratedLevelAccordingEnemyMove(int enemyPosY, int enemyPosX, int newY, int newX) {
+    generatedLevel[enemyPosY][enemyPosX] = '.';
+    generatedLevel[newY][newX] = 'e';
+}
+
+void updateEnemyOnPlayerMap(int enemyPosY, int enemyPosX, int newY, int newX) {
+    if (playerLevel[newY][newX] != '#')
+        playerLevel[newY][newX] = 'e';
+    if (playerLevel[enemyPosY][enemyPosX] != '#')
+        playerLevel[enemyPosY][enemyPosX] = generatedLevel[enemyPosY][enemyPosX];
+}
+
+void helpEnemySearchWay(int levelSize, int enemyPosY, int enemyPosX) {
+    if (enemyPosY+1 < levelSize)
+        if (generatedLevel[enemyPosY+1][enemyPosX] == '.') {
+            updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY+1, enemyPosX);
+            updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY+1, enemyPosX);
+            return;
+        }
+    if (enemyPosX+1 < levelSize)
+        if (generatedLevel[enemyPosY][enemyPosX+1] == '.') {
+            updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY, enemyPosX+1);
+            updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY, enemyPosX+1);
+            return;
+        }
+    if (enemyPosY-1 >= 0)
+        if (generatedLevel[enemyPosY-1][enemyPosX] == '.') {
+            updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY-1, enemyPosX);
+            updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY-1, enemyPosX);
+            return;
+        }
+    if (enemyPosX-1 >= 0)
+        if (generatedLevel[enemyPosY][enemyPosX-1] == '.') {
+            updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY, enemyPosX-1);
+            updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY, enemyPosX-1);
+            return;
+        }
+}
+
+void enemyMove(int levelSize, int enemyPosY, int enemyPosX, int pPosY, int pPosX) {
+    if (pPosY > enemyPosY && generatedLevel[enemyPosY+1][enemyPosX] == '.') {
+        updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY+1, enemyPosX);
+        updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY+1, enemyPosX);
+        return;
+    }
+    if (pPosX > enemyPosX && generatedLevel[enemyPosY][enemyPosX+1] == '.') {
+        updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY, enemyPosX+1);
+        updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY, enemyPosX+1);
+        return;
+    }
+    if (pPosY < enemyPosY && generatedLevel[enemyPosY-1][enemyPosX] == '.') {
+        updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY-1, enemyPosX);
+        updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY-1, enemyPosX);
+        return;
+    }
+    if (pPosX < enemyPosX && generatedLevel[enemyPosY][enemyPosX-1] == '.') {
+        updateGeneratedLevelAccordingEnemyMove(enemyPosY, enemyPosX, enemyPosY, enemyPosX-1);
+        updateEnemyOnPlayerMap(enemyPosY, enemyPosX, enemyPosY, enemyPosX-1);
+        return;
+    }
+    helpEnemySearchWay(levelSize, enemyPosY, enemyPosX);
+}
+
+void processEnemies(int levelSize, int pPosY, int pPosX) {
+    for (int row=0; row<levelSize; row++) {
+        for (int column=0; column<levelSize; column++) {
+            if (generatedLevel[row][column] == 'e') {
+                enemyMove(levelSize, row, column, pPosY, pPosX);
+                return;
+            }
+        }
+    }
+}
+
 int main()
 {   
+    int enemyMovesCount = 0;
     int pPosX = 0;
     int pPosY = 0;
     srand(time(0));
@@ -166,6 +246,9 @@ int main()
         case 'd': if (processPlayerMove(pPosX+1, pPosY, levelSize)) pPosX++; break;
         case 'g': gatherResource(pPosX, pPosY); processPlayerMove(pPosX, pPosY, levelSize); break;
         }
+        enemyMovesCount++;
+        if (enemyMovesCount % 2 == 0)
+            processEnemies(levelSize, pPosY, pPosX);
 
     }
 
